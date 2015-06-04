@@ -7,6 +7,20 @@
 
 #include "kiwi.h"
 
+void
+kiwi_version(struct kiwi_ctx *kiwi)
+{
+	printf("kiwi version %s", KIWI_VERSION);
+	printf("  functions:");
+#ifdef USE_KIWI_SERVER
+	printf(" server");
+#endif
+#ifdef USE_KIWI_CLIENT
+	printf(" client");
+#endif
+	printf("\n");
+}
+
 int
 kiwi_set_debug(struct kiwi_ctx *kiwi, int debug)
 {

@@ -1,4 +1,9 @@
+ifndef NO_USE_KIWI_SERVER
 USE_KIWI_SERVER=1
+endif
+ifndef NO_USE_KIWI_CLIENT
+USE_KIWI_CLIENT=1
+endif
 
 TARGETS = kiwi libkiwi.a
 
@@ -10,8 +15,8 @@ CFLAGS = -g -Wall -Werror
 
 include Makefile.defs
 
-OBJS += kiwi.o chunk.o xbuf.o
-OBJS += submit.o
+OBJS += kiwi.o kiwi_time.o kiwi_chunk.o xbuf.o
+OBJS += submit.o kiwi_mp.o
 
 OBJS += kiwi_ev.o simple_event/simple_event.o
 OBJS += simple_sio/simple_sio.o
@@ -42,13 +47,12 @@ endif
 #   default server is libmhd.
 ifdef USE_KIWI_SERVER
 CPPFLAGS += -DUSE_KIWI_SERVER
+USE_KIWI_SERVER_MHD=1
 USE_KIWI_CODEC_IEEE1888=1
-#ifdef USE_KIWI_SERVER_MHD
 CPPFLAGS += -DUSE_KIWI_SERVER_MHD
 CPPFLAGS += -I$(MHD_INC_DIR)
 LDFLAGS += -L$(MHD_LIB_DIR) -lmicrohttpd
 OBJS += mhd_select.o
-#endif
 endif
 
 # library for codec
@@ -56,7 +60,7 @@ ifdef USE_KIWI_CODEC_IEEE1888
 CPPFLAGS += -DUSE_KIWI_CODEC_IEEE1888
 OBJS += ieee1888.o
 endif
-ifdef USE_CODEC_JSON
+ifdef USE_KIWI_CODEC_JSON
 CPPFLAGS += -DUSE_KIWI_CODEC_JSON
 LDFLAGS += -ljansson
 endif
@@ -76,11 +80,11 @@ test: $(TEST_TARGETS)
 
 test_xbuf: test_xbuf.o xbuf.o
 
-test_chunk: test_chunk.o chunk.o
+test_chunk: test_chunk.o kiwi_time.o kiwi_chunk.o
 
 test_config: test_config.o
 
-test_db: test_db.o
+test_sqlite3: test_sqlite3.o
 
 test_submit: test_submit.o
 
@@ -88,7 +92,7 @@ test_mhd: test_mhd.o
 
 test_http_curl: http_curl.o
 
-test_ieee1888: http_curl.o chunk.o ieee1888.o
+test_ieee1888: http_curl.o kiwi_time.o kiwi_chunk.o ieee1888.o
 
 clean::
 	rm -rf $(OBJS) $(TARGETS) $(TEST_TARGETS) *.dSYM *.o

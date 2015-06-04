@@ -17,11 +17,11 @@ kiwi_ev_init(struct kiwi_ctx *kiwi)
 
 int
 kiwi_set_event_sio(struct kiwi_ctx *kiwi, char *devname, int speed,
-    int blocking, int buflen, int (*parse_func)(struct sio_ctx *), int debug)
+    int blocking, int buflen, int f_flush, int (*parse_func)(struct sio_ctx *), int debug)
 {
 	struct sio_ctx *sio_ctx;
 
-	sio_ctx = sio_init(devname, speed, blocking, buflen, parse_func, kiwi, debug);
+	sio_ctx = sio_init(devname, speed, blocking, buflen, f_flush, parse_func, kiwi, debug);
 	simple_ev_set_sio(kiwi->ev_ctx, sio_readx, sio_ctx, sio_ctx->fd);
 
 	return 0;
@@ -33,7 +33,7 @@ kiwi_ev_loop(struct kiwi_ctx *kiwi)
 	fd_set rfd, wfd, efd;
 	int fd_max;
 	int nfd;
-	struct timeval *timeout;
+	struct timeval *timeout = NULL;
 
 	simple_ev_init_fdset(kiwi->ev_ctx, &rfd, &wfd, &efd, &fd_max);
 
@@ -42,9 +42,9 @@ kiwi_ev_loop(struct kiwi_ctx *kiwi)
 		simple_ev_set_fdset(kiwi->ev_ctx, &fd_max);
 		simple_ev_set_timeout(kiwi->ev_ctx, &timeout);
 
-		nfd = select(fd_max, &rfd, &wfd, &efd, timeout);
+		nfd = select(fd_max + 1, &rfd, &wfd, &efd, timeout);
 		if (nfd < 0) {
-			warn("select()");
+			warn("ERROR: %s: select()", __FUNCTION__);
 			break;
 		}
 

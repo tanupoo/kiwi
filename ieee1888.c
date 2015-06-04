@@ -6,7 +6,7 @@
 
 #include "kiwi.h"
 
-#ifdef USE_KIWI_HTTP_CURL
+#ifdef USE_KIWI_CLIENT_CURL
 #include "http_curl.h"
 #endif
 
@@ -61,7 +61,7 @@ ieee1888_encode(struct kiwi_ctx *kiwi, struct kiwi_chunk_key *head, struct kiwi_
 int
 ieee1888_transmit(struct kiwi_ctx *kiwi, struct kiwi_xbuf *xbuf)
 {
-#ifdef USE_KIWI_HTTP_CURL
+#ifdef USE_KIWI_CLIENT_CURL
 	http_xml_post(xbuf->buf, xbuf->offset, kiwi->peer_name);
 #endif
 

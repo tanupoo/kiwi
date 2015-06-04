@@ -18,6 +18,9 @@ if you need http as your transport,
     libcurl
     libcurl4-openssl-dev
 
+libmicrohttpd
+libjansson
+
 ## mac
 
 sqlite3

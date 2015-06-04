@@ -199,15 +199,35 @@ kiwi_submit_file(struct kiwi_ctx *kiwi, char *filename)
 #endif
 
 /*
+ * submit data into the peer.
+ * @note head will be free in the end of this function.
+ */
+int
+kiwi_submit_peer(struct kiwi_ctx *kiwi, struct kiwi_chunk_key *head)
+{
+	struct kiwi_xbuf *xbuf;
+
+	xbuf = kiwi_xbuf_new(4906);
+	if (kiwi->encode) {
+		kiwi->encode(kiwi, head, xbuf);
+	}
+	if (kiwi->transmit && xbuf != NULL) {
+		kiwi->transmit(kiwi, xbuf);
+	}
+	kiwi_xbuf_free(xbuf);
+
+	kiwi_chunk_free(head);
+
+	return 0;
+}
+
+/**
+ * submit data into the local database.
  * @note head will be free in the end of this function.
  */
 int
 kiwi_submit(struct kiwi_ctx *kiwi, struct kiwi_chunk_key *head)
 {
-#ifdef USE_KIWI_CLIENT
-	struct kiwi_xbuf *xbuf;
-#endif
-
 	/* post the data into the local database if db_ctx is defined. */
 	if (kiwi->db_ctx) {
 		if (kiwi->db_ctx->db_type == KIWI_DBTYPE_SQLITE3 &&
@@ -217,17 +237,6 @@ kiwi_submit(struct kiwi_ctx *kiwi, struct kiwi_chunk_key *head)
 		}
 		kiwi_db_insert(kiwi, head);
 	}
-
-#ifdef USE_KIWI_CLIENT
-	xbuf = kiwi_xbuf_new(4906);
-	if (kiwi->encode) {
-		kiwi->encode(kiwi, head, xbuf);
-	}
-	if (kiwi->transmit && xbuf != NULL) {
-		kiwi->transmit(kiwi, xbuf);
-	}
-	kiwi_xbuf_free(xbuf);
-#endif
 
 	kiwi_chunk_free(head);
 

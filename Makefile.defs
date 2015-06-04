@@ -3,10 +3,8 @@ KIWI_BASE_DIR = $(HOME)/work/tools/kiwi
 #KIWI_BASE_DIR = $(HOME)/kiwi
 
 MHD_BASE_DIR = /usr/local
-#MHD_BASE_DIR = $(KIWI_BASE_DIR)/libmicrohttpd-0.9.38/src
 MHD_INC_DIR = $(MHD_BASE_DIR)/include
-#MHD_LIB_DIR = $(MHD_BASE_DIR)/microhttpd/.libs
-#MHD_LIB_DIR = $(MHD_BASE_DIR)/lib
+MHD_LIB_DIR = $(MHD_BASE_DIR)/lib
 
 CFLAGS += -I$(KIWI_BASE_DIR)
 LDFLAGS += -L$(KIWI_BASE_DIR) -lkiwi

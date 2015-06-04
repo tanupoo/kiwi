@@ -131,6 +131,53 @@ kiwi_ringbuf_get_latest(struct kiwi_ctx *kiwi, const char *s_key, struct kiwi_xb
 }
 
 static int
+kiwi_ringbuf_get_limit(struct kiwi_ctx *kiwi, const char *s_key, const int limit, struct kiwi_chunk_key **head)
+{
+	struct ringbuf_holder *holder =
+	    (struct ringbuf_holder *)kiwi->db_ctx->db;
+	char *key;
+	struct x_ringbuf_data *data;
+	struct ringbuf_data_ctx ctx;
+	int len, i;
+
+	/* the key indicates the table name if keymap_len is 0. */
+	if (!kiwi->keymap_len)
+		key = (char *)s_key;
+	else {
+		key = kiwi_find_keymap_hash(kiwi, s_key);
+		if (key == NULL) {
+			if (kiwi->debug) {
+				warnx("%s: no hash in keymap for %s.",
+				    __FUNCTION__, s_key);
+			}
+			return -1;
+		}
+	}
+
+	if ((data = calloc(limit, sizeof(struct x_ringbuf_data))) == NULL) {
+		err(1, "ERROR: %s: calloc(x_ringbuf_data)", __FUNCTION__);
+		return -1;
+	}
+
+	ctx.buf = (char *)data;
+	ctx.buflen = limit * sizeof(struct x_ringbuf_data);
+	ctx.data_size = sizeof(struct x_ringbuf_data);
+	ctx.ptr = (char *)data;
+	ctx.num_data = 0;
+
+	if ((len = ringbuf_get_item(holder, key, limit, set_data_ctx, &ctx)) == -1) {
+		*head = NULL;
+		return 0;
+	}
+
+	for (i = 0; i < ctx.num_data; i++) {
+		kiwi_chunk_add(head, (char *)s_key, data[i].value, data[i].time);
+	}
+
+	return 0;
+}
+
+static int
 kiwi_ringbuf_close(struct kiwi_ctx *kiwi)
 {
 	struct ringbuf_holder *holder =
@@ -159,6 +206,7 @@ kiwi_ringbuf_init(struct kiwi_ctx *kiwi)
 	kiwi->db_ctx->db_insert = kiwi_ringbuf_insert;
 	kiwi->db_ctx->db_purge = kiwi_ringbuf_purge;
 	kiwi->db_ctx->db_get_latest = kiwi_ringbuf_get_latest;
+	kiwi->db_ctx->db_get_limit = kiwi_ringbuf_get_limit;
 
 	return 0;
 }

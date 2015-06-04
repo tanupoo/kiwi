@@ -16,7 +16,7 @@
 
 #include "kiwi.h"
 
-char *kiwi_server_name = "Kiwi/0.01 (with MHD)";
+char *kiwi_server_name = KIWI_SERVER_NAME "(MHD)";
 
 #define POST_REQ_MAX_BUFLEN	1280
 #define POST_RES_MAX_BUFLEN	1280
@@ -701,7 +701,7 @@ kiwi_server_loop(struct kiwi_ctx *kiwi)
 		nfd = select(fd_max + 1, &rfd, &wfd, &efd, timeout);
 		if (nfd < 0) {
 			int i;
-			warn("select()");
+			warn("WARN: %s: select()", __FUNCTION__);
 			/* XXX fd dump */
 			printf("ERROR: fd_max = %d\n", fd_max);
 			printf("rfd %p\n", &rfd);

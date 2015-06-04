@@ -48,6 +48,15 @@ kiwi_db_get_latest(struct kiwi_ctx *kiwi, const char *tab_name, struct kiwi_xbuf
 	return kiwi->db_ctx->db_get_latest(kiwi, tab_name, x_time, x_value);
 }
 
+/*
+ * get the value of the number of limit.
+ */
+int
+kiwi_db_get_limit(struct kiwi_ctx *kiwi, const char *tab_name, const int limit, struct kiwi_chunk_key **head)
+{
+	return kiwi->db_ctx->db_get_limit(kiwi, tab_name, limit, head);
+}
+
 int
 kiwi_db_close(struct kiwi_ctx *kiwi)
 {

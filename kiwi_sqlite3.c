@@ -22,8 +22,10 @@ kiwi_sqlite3_purge(struct kiwi_ctx *kiwi, char *tabname, int seconds)
 	sqlite3_stmt *stmt;
 	char s_time[KIWI_TIME_MAXLEN];
 	int res;
+	long current_time;
 
-	kiwi_get_time(s_time, sizeof(s_time), time(NULL) - seconds);
+	current_time = (time(NULL) - seconds) * 1000;
+	kiwi_get_time(s_time, sizeof(s_time), current_time);
 
 	res = snprintf(s_sql, sizeof(s_sql), base, tabname);
 	if (res >= sizeof(s_sql)) {
@@ -225,6 +227,15 @@ kiwi_sqlite3_get_latest(struct kiwi_ctx *kiwi, const char *s_key, struct kiwi_xb
 	return success;
 }
 
+/**
+ * sqlite3: select the latest value in the tab_name.
+ */
+static int
+kiwi_sqlite3_get_latest(struct kiwi_ctx *kiwi, const char *s_key, const int limit, struct kiwi_chunk_key **head)
+{
+	return 0;
+}
+
 static int
 kiwi_sqlite3_close(struct kiwi_ctx *kiwi)
 {
@@ -265,6 +276,7 @@ kiwi_sqlite3_init(struct kiwi_ctx *kiwi)
 	kiwi->db_ctx->db_insert = kiwi_sqlite3_insert;
 	kiwi->db_ctx->db_purge = kiwi_sqlite3_purge;
 	kiwi->db_ctx->db_get_latest = kiwi_sqlite3_get_latest;
+	kiwi->db_ctx->db_get_limit = kiwi_sqlite3_get_limit;
 
 	return 0;
 }

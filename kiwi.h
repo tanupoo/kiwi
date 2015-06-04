@@ -1,12 +1,14 @@
 #define KIWI_VERSION      "20141225"
 
+#define KIWI_SERVER_NAME  "Kiwi/0.01"
+
 #define KIWI_JSON_KEY_KIWI     "kiwi"
 #define KIWI_JSON_KEY_VERSION  "version"
 #define KIWI_JSON_KEY_POINT    "point"
 #define KIWI_JSON_KEY_VALUE    "value"
 #define KIWI_JSON_KEY_TIME     "time"
 
-#define KIWI_TIME_MAXLEN	25	/* i.e. YYYY-mm-ddTHH:MM:SS+zzzz\0 */
+#define KIWI_TIME_MAXLEN	30    /* i.e. YYYY-mm-ddTHH:MM:SS.zzz+zzzz\0 */
 #define KIWI_VALUE_MAXLEN	128
 
 #define KIWI_CODEC_IEEE1888	1
@@ -61,6 +63,7 @@ struct kiwi_db_ctx {
 	int (*db_insert)(struct kiwi_ctx *, struct kiwi_chunk_key *);
 	int (*db_purge)(struct kiwi_ctx *, char *, int);
 	int (*db_get_latest)(struct kiwi_ctx *, const char *, struct kiwi_xbuf *, struct kiwi_xbuf *);
+	int (*db_get_limit)(struct kiwi_ctx *, const char *, const int, struct kiwi_chunk_key **);
 };
 
 #include "ringbuf/ringbuf.h"
@@ -80,7 +83,7 @@ int ieee1888_transmit(struct kiwi_ctx *, struct kiwi_xbuf *);
 
 void kiwi_ev_init(struct kiwi_ctx *);
 int kiwi_set_event_sio(struct kiwi_ctx *, char *, int,
-    int, int, int (*)(struct sio_ctx *), int);
+    int, int, int, int (*)(struct sio_ctx *), int);
 void kiwi_ev_loop(struct kiwi_ctx *);
 
 struct kiwi_ctx {
@@ -119,6 +122,10 @@ struct kiwi_ctx {
 	 *
 	 */
 	struct kiwi_db_ctx *db_ctx;
+
+	int cp_interval;
+	int cp_current;
+	int cp_pm_type;
 };
 
 extern int kiwi_debug;
@@ -131,33 +138,29 @@ void kiwi_config_load(struct kiwi_ctx *, char *);
 void kiwi_config_reload(struct kiwi_ctx *, char *);
 //#endif
 
-//#ifdef USE_KIWI_SUBMIT
 /* submit */
 int kiwi_submit_file(char *);
+int kiwi_submit_peer(struct kiwi_ctx *, struct kiwi_chunk_key *);
 int kiwi_submit(struct kiwi_ctx *, struct kiwi_chunk_key *);
-//#endif
 
-//#ifdef USE_KIWI_DB
 /* local db */
 int kiwi_db_insert(struct kiwi_ctx *, struct kiwi_chunk_key *);
 int kiwi_db_purge(struct kiwi_ctx *, char *, int);
 int kiwi_db_get_latest(struct kiwi_ctx *, const char *, struct kiwi_xbuf *, struct kiwi_xbuf *);
+int kiwi_db_get_limit(struct kiwi_ctx *, const char *, const int, struct kiwi_chunk_key **);
 int kiwi_db_close(struct kiwi_ctx *);
 int kiwi_set_db(struct kiwi_ctx *, int, char *, int);
-//#endif
 
 //#ifdef USE_KIWI_SERVER
 //#include <microhttpd.h>
 int kiwi_server_loop(struct kiwi_ctx *);
 //#endif
 
-//#ifdef USE_KIWI_IO
 void kiwi_io_loop(struct kiwi_ctx *);
-//#endif
 
 /* chunk */
 #include <time.h>
-char *kiwi_get_time(char *, int, time_t);
+char *kiwi_get_time(char *, int, long);
 char *kiwi_time_canon(char *, char *, int);
 void kiwi_chunk_dump_value(struct kiwi_chunk_value *);
 void kiwi_chunk_dump_key_list(struct kiwi_chunk_key *);
@@ -170,6 +173,7 @@ struct kiwi_chunk_key *kiwi_chunk_add_key(struct kiwi_chunk_key **, char *);
 struct kiwi_chunk_key *kiwi_chunk_add(struct kiwi_chunk_key **, char *, char *, char *);
 
 /* kiwi.c */
+void kiwi_version(struct kiwi_ctx *);
 int kiwi_set_debug(struct kiwi_ctx *, int);
 void kiwi_dump(char *, int);
 char *kiwi_find_keymap_hash(struct kiwi_ctx *, const char *);
@@ -178,6 +182,15 @@ int kiwi_set_server_param(struct kiwi_ctx *, char *, char *);
 int kiwi_set_codec(struct kiwi_ctx *, int);
 int kiwi_set_client_param(struct kiwi_ctx *, int, char *);
 struct kiwi_ctx *kiwi_init(void);
+
+/* kiwi_mp */
+#define KIWI_CLIENT_MP_MIN   1
+#define KIWI_CLIENT_MP_MAX   2
+#define KIWI_CLIENT_MP_AVR   3
+#define KIWI_CLIENT_MP_V3    4
+int kiwi_mp_get_mean(struct kiwi_chunk_value *, char *, int);
+int kiwi_mp_get_max(struct kiwi_chunk_value *, char *, int);
+int kiwi_mp_get_min(struct kiwi_chunk_value *, char *, int);
 
 /* xbuf */
 void kiwi_xbuf_free(struct kiwi_xbuf *);
