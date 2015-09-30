@@ -160,7 +160,7 @@ void kiwi_io_loop(struct kiwi_ctx *);
 
 /* chunk */
 #include <time.h>
-char *kiwi_get_time(char *, int, long);
+char *kiwi_get_strtime(char *, int, long);
 char *kiwi_time_canon(char *, char *, int);
 void kiwi_chunk_dump_value(struct kiwi_chunk_value *);
 void kiwi_chunk_dump_key_list(struct kiwi_chunk_key *);
