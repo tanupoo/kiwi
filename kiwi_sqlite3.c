@@ -25,7 +25,7 @@ kiwi_sqlite3_purge(struct kiwi_ctx *kiwi, char *tabname, int seconds)
 	long current_time;
 
 	current_time = (time(NULL) - seconds) * 1000;
-	kiwi_get_time(s_time, sizeof(s_time), current_time);
+	kiwi_get_strtime(s_time, sizeof(s_time), current_time);
 
 	res = snprintf(s_sql, sizeof(s_sql), base, tabname);
 	if (res >= sizeof(s_sql)) {
