@@ -81,6 +81,7 @@ kiwi_set_server_param(struct kiwi_ctx *kiwi, char *server_addr, char *server_por
 	return 0;
 }
 
+#ifdef USE_KIWI_CLIENT
 int
 kiwi_set_codec(struct kiwi_ctx *kiwi, int type)
 {
@@ -118,6 +119,7 @@ kiwi_set_client_param(struct kiwi_ctx *kiwi, int type, char *peer_name)
 
 	return 0;
 }
+#endif
 
 struct kiwi_ctx *
 kiwi_init()
