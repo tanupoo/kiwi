@@ -24,19 +24,23 @@ test_kiwi_chunk_add_same_key()
 	int i;
 	char s_time[KIWI_TIME_MAXLEN];
 	char s_value[16];
-	long current_time;
 
 	printf("\n## test: %s\n", __FUNCTION__);
 
 	for (i = 0; i < num; i++) {
-		current_time = (t0 + i) * 1000;
-		kiwi_get_time(s_time, sizeof(s_time), current_time);
+		kiwi_get_strtime(s_time, sizeof(s_time), (t0 + i) * 1000);
 		snprintf(s_value, sizeof(s_value), "%.1f",
 		    random() / (float)RAND_MAX * 40.0 - 10);
 		(void)kiwi_chunk_add(&head, key[0], s_value, s_time);
 	}
 
 	kiwi_chunk_dump(head);
+	kiwi_mp_get_max(head->value, s_value, sizeof(s_value));
+	printf("max : %s\n", s_value);
+	kiwi_mp_get_min(head->value, s_value, sizeof(s_value));
+	printf("min : %s\n", s_value);
+	kiwi_mp_get_mean(head->value, s_value, sizeof(s_value));
+	printf("mean: %s\n", s_value);
 
 	kiwi_chunk_free(head);
 
@@ -52,13 +56,11 @@ test_kiwi_chunk_add_diff_keys()
 	int i;
 	char s_time[KIWI_TIME_MAXLEN];
 	char s_value[16];
-	long current_time;
 
 	printf("\n## test: %s\n", __FUNCTION__);
 
 	for (i = 0; i < num; i++) {
-		current_time = (t0 + i) * 1000;
-		kiwi_get_time(s_time, sizeof(s_time), current_time);
+		kiwi_get_strtime(s_time, sizeof(s_time), (t0 + i) * 1000);
 		snprintf(s_value, sizeof(s_value), "%.1f",
 		    random() / (float)RAND_MAX * 40.0 - 10);
 		(void)kiwi_chunk_add(&head, key[i], s_value, s_time);
@@ -80,15 +82,13 @@ test_kiwi_chunk_add_key_then_value()
 	int i;
 	char s_time[KIWI_TIME_MAXLEN];
 	char s_value[16];
-	long current_time;
 
 	printf("\n## test: %s\n", __FUNCTION__);
 
 	p_key = kiwi_chunk_add_key(&head, key[0]);
 
 	for (i = 0; i < num; i++) {
-		current_time = (t0 + i) * 1000;
-		kiwi_get_time(s_time, sizeof(s_time), current_time);
+		kiwi_get_strtime(s_time, sizeof(s_time), (t0 + i) * 1000);
 		snprintf(s_value, sizeof(s_value), "%.1f",
 		    random() / (float)RAND_MAX * 40.0 - 10);
 		(void)kiwi_chunk_key_add_value(p_key, s_value, s_time);

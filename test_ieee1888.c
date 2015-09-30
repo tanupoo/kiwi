@@ -22,7 +22,7 @@ test_ieee1888()
 	kiwi_set_codec(kiwi, KIWI_CODEC_IEEE1888);
 	kiwi_set_client_param(kiwi, KIWI_TRANSPORT_HTTP, peer_name);
 
-	kiwi_get_time(s_time, sizeof(s_time), 0);
+	kiwi_get_strtime(s_time, sizeof(s_time), 0);
 
 	snprintf(s_val, sizeof(s_val), "%.1f",
 	    random() / (float)RAND_MAX * 40.0 - 10);
