@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 
 	kiwi = kiwi_init();
 	kiwi_set_db(kiwi, KIWI_DBTYPE_SQLITE3, "wren.db", 60);
-	kiwi_set_keymap(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
+	kiwi_set_keymap_tab(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
 
 	test_kiwi_db_insert(kiwi);
 	test_kiwi_db_get_latest(kiwi);

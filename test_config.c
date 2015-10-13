@@ -16,7 +16,11 @@ main(int argc, char* argv[])
 
 	kiwi = kiwi_init();
 	kiwi_config_load(kiwi, argv[1]);
-	kiwi_config_dump(kiwi);
+	kiwi_config_print(kiwi);
+	kiwi_config_set_keymap(kiwi);
+	kiwi_find_keymap_hash(kiwi, "key3");
+	kiwi_find_keymap_hash(kiwi, "key2");
+	kiwi_find_keymap_hash(kiwi, "key1");
 
 	return 0;
 }

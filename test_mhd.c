@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	kiwi_set_server_param(kiwi, "0.0.0.0", "8080");
 #ifdef USE_KIWI_DB_SQLITE3
 	kiwi_set_db(kiwi, KIWI_DBTYPE_SQLITE3, "wren.db", 60);
-	kiwi_set_keymap(kiwi, keymap, KIWI_KEYMAP_SIZE(keymap));
+	kiwi_set_keymap_tab(kiwi, keymap, KIWI_KEYMAP_SIZE(keymap));
 #endif
 	kiwi_server_loop(kiwi);
 

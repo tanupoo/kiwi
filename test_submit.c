@@ -30,13 +30,13 @@ test_submit()
 	kiwi_set_debug(kiwi, f_debug);
 #ifdef USE_KIWI_DB_SQLITE3
 	kiwi_set_db(kiwi, KIWI_DBTYPE_SQLITE3, "wren.db", 60);
-	kiwi_set_keymap(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
+	kiwi_set_keymap_tab(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
 #else
-	kiwi_set_db(kiwi, KIWI_DBTYPE_RING, NULL, 6);
-	kiwi_set_keymap(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
+	kiwi_set_db(kiwi, KIWI_DBTYPE_RINGBUF, NULL, 6);
+	kiwi_set_keymap_tab(kiwi, keymap, sizeof(keymap)/sizeof(keymap[0]));
 #endif
 
-	kiwi_get_time(s_time, sizeof(s_time), 0);
+	kiwi_get_strtime(s_time, sizeof(s_time), 0);
 
 	snprintf(s_val[0], sizeof(s_val[0]), "%.1f",
 	    random() / (float)RAND_MAX * 40.0 - 10);
