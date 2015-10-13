@@ -44,7 +44,7 @@ struct kiwi_keymap {
 };
 #define KIWI_KEYMAP_SIZE(d) sizeof(d)/sizeof(d[0])
 
-struct kiwi_cf_base;
+struct tini_base;
 
 /*
  * db 
@@ -89,20 +89,16 @@ void kiwi_ev_loop(struct kiwi_ctx *);
 struct kiwi_ctx {
 	struct kiwi_chunk_key *head;
 
-	struct kiwi_keymap *keymap;
+	struct kiwi_keymap **keymap;
 	int keymap_len;
 
-	/* XXX move to cf_base */
 	int debug;
 	int f_chroot;
 
-//#ifdef USE_KIWI_SERVER
 	char *server_addr;
 	char *server_port;
-//#endif
 
-	struct kiwi_cf_base **cf;
-	int cf_num;
+	struct tini_base *config;
 
 	int codec;
 	int (*encode)(struct kiwi_ctx *, struct kiwi_chunk_key *, struct kiwi_xbuf *);
@@ -131,12 +127,13 @@ struct kiwi_ctx {
 extern int kiwi_debug;
 extern struct kiwi_ctx *kiwi;
 
-//#ifdef USE_KIWI_CONFIG
 /* config */
-void kiwi_config_dump(struct kiwi_ctx *);
-void kiwi_config_load(struct kiwi_ctx *, char *);
-void kiwi_config_reload(struct kiwi_ctx *, char *);
-//#endif
+void kiwi_config_print(struct kiwi_ctx *);
+int kiwi_config_check_section(struct kiwi_ctx *, const char *);
+const char *kiwi_config_get_v(struct kiwi_ctx *, const char *, const char *);
+int kiwi_config_set_keymap(struct kiwi_ctx *);
+void kiwi_config_load(struct kiwi_ctx *, const char *);
+void kiwi_config_reload(struct kiwi_ctx *, const char *);
 
 /* submit */
 int kiwi_submit_file(char *);
@@ -151,10 +148,10 @@ int kiwi_db_get_limit(struct kiwi_ctx *, const char *, const int, struct kiwi_ch
 int kiwi_db_close(struct kiwi_ctx *);
 int kiwi_set_db(struct kiwi_ctx *, int, char *, int);
 
-//#ifdef USE_KIWI_SERVER
 //#include <microhttpd.h>
+#ifdef USE_KIWI_SERVER
 int kiwi_server_loop(struct kiwi_ctx *);
-//#endif
+#endif
 
 void kiwi_io_loop(struct kiwi_ctx *);
 
@@ -177,7 +174,7 @@ void kiwi_version(struct kiwi_ctx *);
 int kiwi_set_debug(struct kiwi_ctx *, int);
 void kiwi_dump(char *, int);
 char *kiwi_find_keymap_hash(struct kiwi_ctx *, const char *);
-int kiwi_set_keymap(struct kiwi_ctx *, struct kiwi_keymap *, int);
+int kiwi_set_keymap_tab(struct kiwi_ctx *, struct kiwi_keymap *, int);
 int kiwi_set_server_param(struct kiwi_ctx *, char *, char *);
 int kiwi_set_codec(struct kiwi_ctx *, int);
 int kiwi_set_client_param(struct kiwi_ctx *, int, char *);

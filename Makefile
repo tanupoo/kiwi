@@ -9,7 +9,6 @@ TARGETS = kiwi libkiwi.a
 
 TEST_TARGETS = test_xbuf test_chunk
 TEST_TARGETS += test_config test_submit
-TEST_TARGETS += test_ieee1888 test_http_curl test_mhd
 
 CFLAGS = -g -Wall -Werror
 
@@ -66,10 +65,8 @@ LDFLAGS += -ljansson
 endif
 
 # library for configuration
-ifdef USE_KIWI_CONFIG
-OBJS += kiwi_config.o inih/ini.o
+OBJS += kiwi_config.o tini/tini.o
 CPPFLAGS += -DUSE_KIWI_CONFIG
-endif
 
 #kiwi:
 
@@ -82,11 +79,11 @@ test_xbuf: test_xbuf.o xbuf.o
 
 test_chunk: test_chunk.o kiwi_time.o kiwi_chunk.o
 
-test_config: test_config.o
+test_config: test_config.o kiwi_config.o tini/tini.o
 
 test_sqlite3: test_sqlite3.o
 
-test_submit: test_submit.o
+test_submit: test_submit.o kiwi_time.o
 
 test_mhd: test_mhd.o
 

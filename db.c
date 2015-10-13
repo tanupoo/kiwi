@@ -70,6 +70,8 @@ kiwi_set_db(struct kiwi_ctx *kiwi, int db_type, char *db_name, int max_size)
 		err(1, "calloc(kiwi_db_ctx)");
 
 	kiwi->db_ctx->db_type = db_type;
+	if (db_name == NULL)
+		db_name = "none";
 	kiwi->db_ctx->db_name = strdup(db_name);
 	kiwi->db_ctx->db_max_size = max_size;
 

@@ -56,17 +56,26 @@ kiwi_find_keymap_hash(struct kiwi_ctx *kiwi, const char *key)
 		return NULL;
 
 	for (i = 0; i < kiwi->keymap_len; i++) {
-		if (strcmp(kiwi->keymap[i].key, key) == 0)
-			return kiwi->keymap[i].hash;
+		if (strcmp(kiwi->keymap[i]->key, key) == 0)
+			return kiwi->keymap[i]->hash;
 	}
 
 	return NULL;
 }
 
 int
-kiwi_set_keymap(struct kiwi_ctx *kiwi, struct kiwi_keymap *keymap, int keymap_len)
+kiwi_set_keymap_tab(struct kiwi_ctx *kiwi, struct kiwi_keymap *keymap_tab, int keymap_len)
 {
-	kiwi->keymap = keymap;
+	struct kiwi_keymap **new;
+	int i;
+
+	if ((new = calloc(keymap_len, sizeof(struct kiwi_keymap *))) == NULL)
+		err(1, "%s: calloc(keymap)", __FUNCTION__);
+
+	for (i = 0; i < keymap_len; i++)
+		new[i] = &keymap_tab[i];
+
+	kiwi->keymap = new;
 	kiwi->keymap_len = keymap_len;
 
 	return 0;
