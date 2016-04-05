@@ -5,17 +5,15 @@ kiwi
 
 kiwi is a library to make a field/edge/fog gateway.
 
-##
+## Requirements
+
+libcurl 7.48.0
+libmicrohttpd 0.9.48
 
 if you need sqlite as your storage,
     sqlite3
     sqlite3-dev
 
-if you need http as your transport,
-    libcurl
-    libcurl4-openssl-dev
-
-libmicrohttpd-0.9.38
 libjansson
 
 ## mac
