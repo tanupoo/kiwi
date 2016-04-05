@@ -1,0 +1,96 @@
+include Makefile.defs
+
+ifndef NO_USE_KIWI_SERVER
+USE_KIWI_SERVER=1
+endif
+ifndef NO_USE_KIWI_CLIENT
+USE_KIWI_CLIENT=1
+endif
+
+TEST_TARGETS = test_xbuf test_chunk test_time
+TEST_TARGETS += test_config
+TEST_TARGETS += test_submit
+TEST_TARGETS += test_ieee1888
+TEST_TARGETS += test_if_curl
+TEST_TARGETS += test_mhd
+
+# base
+CPPFLAGS += -I$(KIWI_BASE_DIR)
+LDFLAGS += -L$(KIWI_BASE_DIR)
+LDLIBS = -lkiwi
+
+ifdef KIWI_TIME_WITH_MS
+CPPFLAGS += -DKIWI_TIME_WITH_MS
+endif
+
+# sqlite3
+ifdef USE_KIWI_DB_SQLITE3
+CPPFLAGS += -DUSE_KIWI_DB_SQLITE3
+LDLIBS += -lsqlite3
+endif
+
+# library for client.
+#   default codec is IEEE1888.
+#   default client is libcurl.
+ifdef USE_KIWI_CLIENT
+CPPFLAGS += -DUSE_KIWI_CLIENT
+USE_KIWI_TRANSPORT_IEEE1888_SOAP=1
+CPPFLAGS += -DUSE_KIWI_CLIENT_CURL
+# libcurl
+LDLIBS += -lcurl
+endif
+
+# library for server
+ifdef USE_KIWI_SERVER
+CPPFLAGS += -DUSE_KIWI_SERVER
+# libmicrohttpd
+ifdef USE_KIWI_SERVER_MHD
+CPPFLAGS += -DUSE_KIWI_SERVER_MHD
+ifdef MHD_INC_DIR
+CPPFLAGS += -I$(MHD_INC_DIR)
+endif
+ifdef MHD_LIB_DIR
+LDFLAGS += -L$(MHD_LIB_DIR)
+endif
+LDLIBS += -lmicrohttpd
+endif
+endif
+
+# library for transport
+ifdef USE_KIWI_TRANSPORT_IEEE1888_SOAP
+CPPFLAGS += -DUSE_KIWI_TRANSPORT_IEEE1888_SOAP
+endif
+ifdef USE_KIWI_TRANSPORT_JSON
+CPPFLAGS += -DUSE_KIWI_TRANSPORT_JSON
+LDLIBS += -ljansson
+endif
+ifdef USE_KIWI_TRANSPORT_KII_HTTP
+CPPFLAGS += -DUSE_KIWI_TRANSPORT_KII_HTTP
+endif
+
+# library for configuration
+CPPFLAGS += -DUSE_KIWI_CONFIG
+
+test: $(TEST_TARGETS)
+
+test_xbuf: test_xbuf.o xbuf.o
+
+test_chunk: test_chunk.o kiwi_time.o kiwi_chunk.o
+
+test_config: test_config.o kiwi_config.o tini/tini.o
+
+test_sqlite3: test_sqlite3.o
+
+test_submit: test_submit.o kiwi_time.o
+
+test_if_mhd: test_mhd.o
+
+test_if_curl: if_curl.o
+
+test_if_ieee1888: if_curl.o kiwi_time.o kiwi_chunk.o if_ieee1888.o
+
+clean::
+	rm -rf $(OBJS) $(TARGETS) $(TEST_TARGETS) *.dSYM *.o
+
+.PHONY: test clean
+
