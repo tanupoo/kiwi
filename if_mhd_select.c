@@ -48,9 +48,11 @@ struct re_patt {
 	char *patt;
 	regex_t re;
 };
-static struct re_patt re_doc = { ".*\\.(html|css|js|jpg|png)" };
-//static struct re_patt re_query = { "k=[0-9a-z]{41}(&k=[0-9a-z]{41}){0,20}" };
-//static struct re_patt re_query2 = { ".*/\?k=[0-9a-zA-Z/:_\\-]{0,128}(&k=[0-9a-zA-Z/:_\\-]{0,128}){0,20}" };
+static struct re_patt re_doc = { ".*\\.(html|css|js|jpg|png|ico)" };
+
+#ifdef CHECK_QUERY_STRING_RE
+static struct re_patt re_query2 = { ".*/\?k=[0-9a-zA-Z/:_\\-]{0,128}(&k=[0-9a-zA-Z/:_\\-]{0,128}){0,20}" };
+#endif
 
 #define INTERNAL_ERROR_PAGE "<html><head><title>Internal error</title></head><body>Internal error</body></html>"
 
@@ -72,20 +74,26 @@ struct hs_query_t {
  * set document root.
  */
 static int
-hs_set_root(char *root_dir)
+set_doc_root(struct kiwi_ctx *kiwi)
 {
+	char *doc_root = kiwi->server_root_dir;
 	char path[MAX_PATHLEN];
 
-	if (root_dir == NULL) {
+	if (doc_root == NULL) {
 		if (getcwd(path, MAX_PATHLEN) == NULL)
 			err(1, "ERROR: %s: getcwd()", __FUNCTION__);
-		root_dir = path;
+		doc_root = path;
 	}
 
-	warnx("ERROR: %s: trying change root to %s", __FUNCTION__, root_dir);
-	if (chroot(root_dir) == -1)
-		err(1, "ERROR: %s: chroot()", __FUNCTION__);
-	warnx("ERROR: %s: change root to %s", __FUNCTION__, root_dir);
+	if (kiwi->f_chroot) {
+		if (chroot(doc_root) < 0)
+			err(1, "ERROR: %s: chroot(%s)", __FUNCTION__, doc_root);
+		warnx("INFO: change root into %s", doc_root);
+	} else {
+		if (chdir(doc_root) == -1)
+			err(1, "ERROR: %s: chdir(%s)", __FUNCTION__, doc_root);
+		warnx("INFO: change document root into %s", doc_root);
+	}
 
 	return 0;
 }
@@ -138,22 +146,6 @@ hs_re_free()
 /*
  * functions to handle HTTP.
  */
-
-#if 0
-x HTTP/1.1 200 OK
-x Date: Thu, 27 Nov 2014 01:07:30 GMT
-+ Server: Apache/2.2.14
-Content-Location: index.html.ja
-Vary: negotiate,accept-language,Accept-Encoding
-TCN: choice
-Last-Modified: Tue, 20 May 2014 03:55:47 GMT
-ETag: "1081bed-4585-4f9ccdad92ab2"
-Accept-Ranges: bytes
-Content-Length: 17797
-Connection: close
-+ Content-Type: text/html
-Content-Language: ja
-#endif
 
 static void
 cb_terminated(struct kiwi_ctx *kiwi, struct MHD_Connection *conn, void **con_cls,
@@ -489,20 +481,36 @@ hs_res_query(struct kiwi_ctx *kiwi, struct MHD_Connection *conn, const char *url
 	struct hs_query_t *query;
 	int num, ret;
 
+#ifdef CHECK_QUERY_STRING_RE
+	/* XXX how can i check the query part in the url. */
+	num = hs_re_match(kiwi, &re_query2, url);
+#else
+	/* query for key ? */
+	num = MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND,
+	    NULL, NULL);
+#endif
+
+	if (num	== 0) {
+		warnx("%s: invalid request [%s]", __FUNCTION__, url);
+		return MHD_queue_response(conn,
+		    MHD_HTTP_INTERNAL_SERVER_ERROR, internal_error_response);
+	}
+
 	if ((query = hs_query_new(kiwi)) == NULL) {
 		warnx("%s: hs_query_t allocation failed.", __FUNCTION__);
 		return MHD_NO;
 	}
 
 	/* the header of the response of the query */
-	if (kiwi_xbuf_strcat(query->xbuf, s_query_header) != strlen(s_query_header)) {
+	if (kiwi_xbuf_strcat(query->xbuf, s_query_header) !=
+	    strlen(s_query_header)) {
 		warnx("%s: GET's response is exeeced (footer).", __FUNCTION__);
 		hs_query_free(query);
 		return MHD_NO;
 	}
 
-	num = MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, NULL, NULL);
-	ret = MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &hs_res_cb_mkmsg, query);
+	ret = MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND,
+	    &hs_res_cb_mkmsg, query);
 	if (num != ret) {
 		warnx("%s: too many argument", __FUNCTION__);
 		hs_query_free(query);
@@ -510,7 +518,8 @@ hs_res_query(struct kiwi_ctx *kiwi, struct MHD_Connection *conn, const char *url
 	}
 
 	/* the end of the response of the query */
-	if (kiwi_xbuf_strcat(query->xbuf, s_query_footer) != strlen(s_query_footer)) {
+	if (kiwi_xbuf_strcat(query->xbuf, s_query_footer) !=
+	    strlen(s_query_footer)) {
 		warnx("%s: GET's response is exeeced (footer).", __FUNCTION__);
 		hs_query_free(query);
 		return MHD_NO;
@@ -530,13 +539,12 @@ do_get(struct kiwi_ctx *kiwi, struct MHD_Connection *conn,
 	static int aptr;
 	int urllen;
 	const char *url;
-	int ret;
 
-	/* need to skip the 1st slash unless it's done chroot.  */
-	if (kiwi->server_root_dir)
+	/* need to skip the 1st slash unless it has done chroot(). */
+	if (kiwi->f_chroot)
 		url = url0;
 	else
-		url = &url0[1];
+		url = url0 + 1;
 
 	/* do never respond on first call */
 	if (&aptr != *ptr) {
@@ -546,7 +554,7 @@ do_get(struct kiwi_ctx *kiwi, struct MHD_Connection *conn,
 	*ptr = NULL;
 
 	/* check the length of the url */
-	urllen = strlen(url0);
+	urllen = strlen(url);
 	if (urllen > KIWI_HS_URL_MAXLEN) {
 		warnx("%s: url is too long=%d", __FUNCTION__, urllen);
 		return MHD_NO;
@@ -556,20 +564,7 @@ do_get(struct kiwi_ctx *kiwi, struct MHD_Connection *conn,
 	if (hs_re_match(kiwi, &re_doc, url))
 		return hs_res_doc(conn, url);
 
-#if 1
-	/* query for key ? */
-	ret = MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND,
-	    NULL, NULL);
-#else
-	/* XXX how can i check the query part in the url. */
-	ret = hs_re_match(kiwi, &re_query2, url);
-#endif
-
-	if (ret	== 0) {
-		warnx("%s: invalid request [%s]", __FUNCTION__, url);
-		return MHD_queue_response(conn,
-		    MHD_HTTP_INTERNAL_SERVER_ERROR, internal_error_response);
-	}
+	/* the request is a query */
 
 	return hs_res_query(kiwi, conn, url);
 }
@@ -738,17 +733,6 @@ conn_handler(void *cls, struct MHD_Connection *conn,
 	return MHD_NO;
 }
 
-#if 0
-static void
-cb_timeout(struct kiwi_ctx *kiwi)
-{
-	int qlen = 0;
-
-	if (qlen)
-		warnx("%s: qlen=%d\n", __FUNCTION__, qlen);
-}
-#endif
-
 /*
  * TODO io_ctx may take multiple IOs.
  */
@@ -770,8 +754,8 @@ kiwi_server_loop(struct kiwi_ctx *kiwi)
 #endif
 	int nfd;
 
-	/* change root anyway */
-	hs_set_root(kiwi->server_root_dir);
+	/* change document root, and chroot() if needed */
+	set_doc_root(kiwi);
 
 	if (!kiwi->server_addr) {
 		warnx("%s: set %s as the server addr", __FUNCTION__,
