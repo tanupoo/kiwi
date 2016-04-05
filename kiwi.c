@@ -35,6 +35,14 @@ kiwi_set_debug(struct kiwi_ctx *kiwi, int debug)
 	return 0;
 }
 
+int
+kiwi_set_chroot(struct kiwi_ctx *kiwi)
+{
+	kiwi->f_chroot = 1;
+
+	return 0;
+}
+
 void
 kiwi_dump(char *data, int datalen)
 {

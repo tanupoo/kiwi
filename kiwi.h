@@ -110,6 +110,7 @@ struct kiwi_ctx {
 
 	struct tini_base *config;
 	int debug;
+	int f_chroot;
 
 	/* server configuration */
 	char *server_addr;
@@ -192,6 +193,7 @@ struct kiwi_chunk_key *kiwi_chunk_add(struct kiwi_chunk_key **, char *, char *, 
 /* kiwi.c */
 void kiwi_version(struct kiwi_ctx *);
 int kiwi_set_debug(struct kiwi_ctx *, int);
+int kiwi_set_chroot(struct kiwi_ctx *);
 void kiwi_dump(char *, int);
 char *kiwi_find_keymap_hash(struct kiwi_ctx *, const char *);
 int kiwi_set_keymap_tab(struct kiwi_ctx *, struct kiwi_keymap *, int);
