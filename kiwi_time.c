@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2010 Shoichi Sakane <sakane@tanu.org>, All rights reserved.
+ * See the file LICENSE in the top level directory for more details.
+ */
+
 #ifdef __linux__
 #define _XOPEN_SOURCE
 #define _BSD_SOURCE
