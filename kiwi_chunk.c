@@ -50,7 +50,7 @@ kiwi_chunk_dump_key_list(struct kiwi_chunk_key *khead)
 	struct kiwi_chunk_key *p;
 
 	if (khead == NULL) {
-		printf("no key in the chunk_key.\n");
+		printf("ERROR: no key in the chunk_key.\n");
 		return;
 	}
 
@@ -70,8 +70,8 @@ kiwi_chunk_dump(struct kiwi_chunk_key *khead)
 	}
 
 	for (p = khead; p != NULL; p = p->next) {
+		printf("key = [%s]\n", p->key);
 		kiwi_chunk_dump_value(p->value);
-		errx(1, "ERROR: %s: key = [%s]\n", __FUNCTION__, p->key);
 	}
 }
 
