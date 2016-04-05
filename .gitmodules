@@ -1,0 +1,12 @@
+[submodule "ringbuf"]
+	path = ringbuf
+	url = git@github.com:tanupoo/ringbuf.git
+[submodule "tini"]
+	path = tini
+	url = git@github.com:tanupoo/tini.git
+[submodule "simple_sio"]
+	path = simple_sio
+	url = git@github.com:tanupoo/simple_sio.git
+[submodule "simple_event"]
+	path = simple_event
+	url = git@github.com:tanupoo/simple_event.git
