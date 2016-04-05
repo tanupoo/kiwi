@@ -1,5 +1,4 @@
 #include <sys/types.h>
-
 #include <stdio.h>
 
 #include "kiwi.h"

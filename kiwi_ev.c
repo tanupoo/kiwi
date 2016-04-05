@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,18 +11,33 @@
 void
 kiwi_ev_init(struct kiwi_ctx *kiwi)
 {
-	if ((kiwi->ev_ctx = calloc(1, sizeof(*kiwi->ev_ctx))) == NULL)
-		err(1, "ERROR: %s: calloc(ev_ctx)", __FUNCTION__);
-	simple_ev_init(kiwi->ev_ctx);
+	simple_ev_init(&(kiwi->ev_ctx));
+}
+
+/*
+ * @param timer timer in miliseconds.
+ */
+int
+kiwi_set_event_timer(struct kiwi_ctx *kiwi, int timer, int (*cb)(void *))
+{
+	struct timeval tv_timer;
+
+	memset(&tv_timer, 0, sizeof(tv_timer));
+	tv_timer.tv_sec = timer / 1000;
+	tv_timer.tv_usec = timer % 1000;
+	simple_ev_set_timer(kiwi->ev_ctx, cb, kiwi, &tv_timer, 1);
+
+	return 0;
 }
 
 int
 kiwi_set_event_sio(struct kiwi_ctx *kiwi, char *devname, int speed,
-    int blocking, int buflen, int f_flush, int (*parse_func)(struct sio_ctx *), int debug)
+    int blocking, int buflen, int (*cb)(struct sio_ctx *))
 {
 	struct sio_ctx *sio_ctx;
 
-	sio_ctx = sio_init(devname, speed, blocking, buflen, f_flush, parse_func, kiwi, debug);
+	sio_ctx = sio_init(devname, speed, blocking, buflen, 0,
+	    cb, kiwi, kiwi->debug);
 	simple_ev_set_sio(kiwi->ev_ctx, sio_readx, sio_ctx, sio_ctx->fd);
 
 	return 0;

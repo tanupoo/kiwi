@@ -1,6 +1,11 @@
+#ifndef KIWI_H_
+#define KIWI_H_
+
+#include <stdint.h>
+
 #define KIWI_VERSION      "20141225"
 
-#define KIWI_SERVER_NAME  "Kiwi/0.01"
+#define KIWI_SERVER_NAME  "kiwi/0.01"
 
 #define KIWI_JSON_KEY_KIWI     "kiwi"
 #define KIWI_JSON_KEY_VERSION  "version"
@@ -11,14 +16,13 @@
 #define KIWI_TIME_MAXLEN	30    /* i.e. YYYY-mm-ddTHH:MM:SS.zzz+zzzz\0 */
 #define KIWI_VALUE_MAXLEN	128
 
-#define KIWI_CODEC_IEEE1888	1
-#define KIWI_CODEC_JSON		2
-
-#define KIWI_TRANSPORT_HTTP	1
+#define KIWI_SUBMIT_BUFFER_SIZE 4096
+#define KIWI_TRANSPORT_IEEE1888_SOAP	1
+#define KIWI_TRANSPORT_IEEE1888_JSON	2
+#define KIWI_TRANSPORT_KII_HTTP		3
+#define KIWI_TRANSPORT_KII_MQTT		4
 
 #define KIWI_SQL_STRLEN 1024
-
-#include "depends.h"
 
 struct kiwi_xbuf {
 	char *buf;
@@ -69,8 +73,17 @@ struct kiwi_db_ctx {
 #include "ringbuf/ringbuf.h"
 int kiwi_ringbuf_init(struct kiwi_ctx *);
 
-int ieee1888_encode(struct kiwi_ctx *, struct kiwi_chunk_key *, struct kiwi_xbuf *);
-int ieee1888_transmit(struct kiwi_ctx *, struct kiwi_xbuf *);
+#ifdef USE_KIWI_CLIENT_CURL
+#include "if_curl.h"
+#endif
+
+#ifdef USE_KIWI_TRANSPORT_IEEE1888_SOAP
+#include "if_ieee1888.h"
+#endif
+
+#ifdef USE_KIWI_TRANSPORT_KII_HTTP
+#include "if_kii.h"
+#endif
 
 #ifdef USE_KIWI_TRANSPORT_XMPP
 #endif
@@ -82,32 +95,36 @@ int ieee1888_transmit(struct kiwi_ctx *, struct kiwi_xbuf *);
 #include "simple_sio/simple_sio.h"
 
 void kiwi_ev_init(struct kiwi_ctx *);
+int kiwi_set_event_timer(struct kiwi_ctx *, int, int (*)(void *));
 int kiwi_set_event_sio(struct kiwi_ctx *, char *, int,
-    int, int, int, int (*)(struct sio_ctx *), int);
+    int, int, int (*)(struct sio_ctx *));
 void kiwi_ev_loop(struct kiwi_ctx *);
 
 struct kiwi_ctx {
 	struct kiwi_chunk_key *head;
 
-	struct kiwi_keymap **keymap;
-	int keymap_len;
-
+	struct tini_base *config;
 	int debug;
-	int f_chroot;
 
+	/* server configuration */
 	char *server_addr;
 	char *server_port;
+	char *server_root_dir;
 
-	struct tini_base *config;
-
-	int codec;
-	int (*encode)(struct kiwi_ctx *, struct kiwi_chunk_key *, struct kiwi_xbuf *);
-
+	/* client configuration */
+	int submit_buffer_size;
 	int transport;
+	char *server_url;
+	void *client_param;
+	int encode_buffer_size;
+	int (*encode)(struct kiwi_ctx *, struct kiwi_chunk_key *, struct kiwi_xbuf *);
 	int (*transmit)(struct kiwi_ctx *, struct kiwi_xbuf *);
-	char *peer_name;
 
 	struct simple_ev_ctx *ev_ctx;
+
+	/* internal database */
+	struct kiwi_keymap **keymap;
+	int keymap_len;
 
 	/*
 	 * TODO
@@ -130,15 +147,14 @@ extern struct kiwi_ctx *kiwi;
 /* config */
 void kiwi_config_print(struct kiwi_ctx *);
 int kiwi_config_check_section(struct kiwi_ctx *, const char *);
-const char *kiwi_config_get_v(struct kiwi_ctx *, const char *, const char *);
+char *kiwi_config_get_v(struct kiwi_ctx *, const char *, const char *);
 int kiwi_config_set_keymap(struct kiwi_ctx *);
 void kiwi_config_load(struct kiwi_ctx *, const char *);
 void kiwi_config_reload(struct kiwi_ctx *, const char *);
 
 /* submit */
-int kiwi_submit_file(char *);
 int kiwi_submit_peer(struct kiwi_ctx *, struct kiwi_chunk_key *);
-int kiwi_submit(struct kiwi_ctx *, struct kiwi_chunk_key *);
+int kiwi_submit_ldb(struct kiwi_ctx *, struct kiwi_chunk_key *);
 
 /* local db */
 int kiwi_db_insert(struct kiwi_ctx *, struct kiwi_chunk_key *);
@@ -156,9 +172,8 @@ int kiwi_server_loop(struct kiwi_ctx *);
 void kiwi_io_loop(struct kiwi_ctx *);
 
 /* chunk */
-#include <time.h>
-char *kiwi_get_strtime(char *, int, long);
-char *kiwi_time_canon(char *, char *, int);
+char *kiwi_get_strtime(char *, int, uint64_t);
+char *kiwi_get_strunixtime(char *, int);
 void kiwi_chunk_dump_value(struct kiwi_chunk_value *);
 void kiwi_chunk_dump_key_list(struct kiwi_chunk_key *);
 void kiwi_chunk_dump(struct kiwi_chunk_key *);
@@ -175,12 +190,15 @@ int kiwi_set_debug(struct kiwi_ctx *, int);
 void kiwi_dump(char *, int);
 char *kiwi_find_keymap_hash(struct kiwi_ctx *, const char *);
 int kiwi_set_keymap_tab(struct kiwi_ctx *, struct kiwi_keymap *, int);
-int kiwi_set_server_param(struct kiwi_ctx *, char *, char *);
-int kiwi_set_codec(struct kiwi_ctx *, int);
-int kiwi_set_client_param(struct kiwi_ctx *, int, char *);
+#ifdef USE_KIWI_SERVER
+int kiwi_set_server(struct kiwi_ctx *, char *, char *, int, char *);
+#endif
+#ifdef USE_KIWI_CLIENT
+int kiwi_set_client(struct kiwi_ctx *, int, char *, void *);
+#endif
 struct kiwi_ctx *kiwi_init(void);
 
-/* kiwi_mp */
+/* kiwi_mp (Math Processing) */
 #define KIWI_CLIENT_MP_MIN   1
 #define KIWI_CLIENT_MP_MAX   2
 #define KIWI_CLIENT_MP_AVR   3
@@ -195,3 +213,5 @@ struct kiwi_xbuf *kiwi_xbuf_new(int);
 size_t kiwi_xbuf_strcat(struct kiwi_xbuf *, const char *);
 size_t kiwi_xbuf_vstrcat(struct kiwi_xbuf *, const char *, ...);
 size_t kiwi_xbuf_memcpy(struct kiwi_xbuf *, size_t, const char *, size_t);
+
+#endif /* KIWI_H_ */

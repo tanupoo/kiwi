@@ -1,15 +1,47 @@
-
 KIWI_BASE_DIR = $(HOME)/work/tools/kiwi
-#KIWI_BASE_DIR = $(HOME)/kiwi
 
-MHD_BASE_DIR = /usr/local
+KIWI_TIME_WITH_MS=1
+
+###
+# USE_KIWI_SERVER is default.
+# when USE_KIWI_SERVER is defined,
+# USE_KIWI_SERVER_MHD must be defined.
+# USE_KIWI_TRANSPORT_IEEE1888_SOAP must be defined as well.
+#
+#NO_USE_KIWI_SERVER=1
+
+###
+# define the server module
+# right now, only microhttpd is supported.
+# so, if you use a server function, below lines for MHD must not be removed.
+#
+USE_KIWI_SERVER_MHD=1
+MHD_BASE_DIR = $(HOME)/apps/mhd
 MHD_INC_DIR = $(MHD_BASE_DIR)/include
 MHD_LIB_DIR = $(MHD_BASE_DIR)/lib
 
-CFLAGS += -I$(KIWI_BASE_DIR)
-LDFLAGS += -L$(KIWI_BASE_DIR) -lkiwi
+###
+# USE_KIWI_CLIENT is default.
+#
+#NO_USE_KIWI_CLIENT=1
 
-ifdef USE_KIWI_SERVER_MHD
-CFLAGS += -I$(MHD_INC_DIR)
-LDFLAGS += -L$(MHD_LIB_DIR) -lmicrohttpd
-endif
+###
+# define the client module
+#
+#CURL_BASE_DIR = /usr
+#CURL_INC_DIR = $(CURL_BASE_DIR)/include
+#CURL_LIB_DIR = $(CURL_BASE_DIR)/lib
+
+###
+# define the type of the client transport.
+# only one type can be defined.
+#
+USE_KIWI_TRANSPORT_HTTP_JSON=1
+USE_KIWI_TRANSPORT_IEEE1888_SOAP=1
+USE_KIWI_TRANSPORT_KII_HTTP=1
+
+###
+# define the type of the local database
+#
+#USE_KIWI_DB_SQLITE3=1
+

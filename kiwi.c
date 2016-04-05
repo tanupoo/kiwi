@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,54 +82,65 @@ kiwi_set_keymap_tab(struct kiwi_ctx *kiwi, struct kiwi_keymap *keymap_tab, int k
 	return 0;
 }
 
+#ifdef USE_KIWI_SERVER
 int
-kiwi_set_server_param(struct kiwi_ctx *kiwi, char *server_addr, char *server_port)
+kiwi_set_server(struct kiwi_ctx *kiwi, char *server_addr, char *server_port,
+    int buffer_size, char *root_dir)
 {
-	kiwi->server_addr = server_addr;
-	kiwi->server_port = server_port;
+	if (server_addr != NULL)
+		kiwi->server_addr = strdup(server_addr);
+	if (server_port != NULL)
+		kiwi->server_port = strdup(server_port);
+	if (root_dir != NULL)
+		kiwi->server_root_dir = strdup(root_dir);
+	kiwi->encode_buffer_size = buffer_size;
 
 	return 0;
 }
+#endif /* USE_KIWI_SERVER */
 
 #ifdef USE_KIWI_CLIENT
+/*
+ * set transport type, server_url, and the parameters..
+ * the data pointed by the value of param must be allocated
+ * in the non-volatile memory so that the internal functions can refer to it.
+ * @param server_url string server url
+ * @param param protocol specific parameters
+ */
 int
-kiwi_set_codec(struct kiwi_ctx *kiwi, int type)
+kiwi_set_client(struct kiwi_ctx *kiwi, int type, char *server_url, void *param)
 {
-	switch (type) {
-	case KIWI_CODEC_IEEE1888:
-		kiwi->encode = ieee1888_encode;
-		//kiwi->decode = ieee1888_decode;
-		break;
-#ifdef USE_KIWI_CODEC_JSON
-	case KIWI_CODEC_JSON:
-		kiwi->encode = json_encode;
-		//kiwi->decode = json_decode;
-		break;
-#endif
-	default:
-		errx(1, "%s: invalid codec type %d", __FUNCTION__, type);
-	}
-	kiwi->codec = type;
-
-	return 0;
-}
-
-int
-kiwi_set_client_param(struct kiwi_ctx *kiwi, int type, char *peer_name)
-{
-	switch (type) {
-	case KIWI_TRANSPORT_HTTP:
-		kiwi->transmit = ieee1888_transmit;
-		kiwi->peer_name = peer_name;
-		break;
-	default:
-		errx(1, "%s: invalid transport type %d", __FUNCTION__, type);
-	}
 	kiwi->transport = type;
+	kiwi->client_param = param;
+	if (server_url != NULL)
+		kiwi->server_url = strdup(server_url);
+
+	switch (type) {
+	case KIWI_TRANSPORT_IEEE1888_SOAP:
+		kiwi->encode = if_ieee1888_soap_encode;
+		kiwi->transmit = if_ieee1888_http_transmit;
+		if_ieee1888_init(kiwi);
+		break;
+	case KIWI_TRANSPORT_IEEE1888_JSON:
+		kiwi->encode = if_ieee1888_json_encode;
+		kiwi->transmit = if_ieee1888_http_transmit;
+		if_ieee1888_init(kiwi);
+		break;
+#ifdef USE_KIWI_TRANSPORT_KII_HTTP
+	case KIWI_TRANSPORT_KII_HTTP:
+		kiwi->encode = if_kii_encode;
+		kiwi->transmit = if_kii_http_transmit;
+		if_kii_init(kiwi);
+		break;
+#endif
+	default:
+		errx(1, "ERROR: %s: invalid transport type %d",
+		    __FUNCTION__, type);
+	}
 
 	return 0;
 }
-#endif
+#endif /* USE_KIWI_CLIENT */
 
 struct kiwi_ctx *
 kiwi_init()
@@ -136,7 +148,10 @@ kiwi_init()
 	struct kiwi_ctx *new;
 
 	if ((new = calloc(1, sizeof(*new))) == NULL)
-		err(1, "calloc(kiwi_ctx)");
+		err(1, "ERROR: %s: calloc(kiwi_ctx)", __FUNCTION__);
+
+	new->submit_buffer_size = KIWI_SUBMIT_BUFFER_SIZE;
+	kiwi_ev_init(new);
 
 	return new;
 }

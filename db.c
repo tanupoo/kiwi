@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -67,7 +68,7 @@ int
 kiwi_set_db(struct kiwi_ctx *kiwi, int db_type, char *db_name, int max_size)
 {
 	if ((kiwi->db_ctx = calloc(1, sizeof(*kiwi->db_ctx))) == NULL)
-		err(1, "calloc(kiwi_db_ctx)");
+		err(1, "ERROR: %s: calloc(kiwi_db_ctx)", __FUNCTION__);
 
 	kiwi->db_ctx->db_type = db_type;
 	if (db_name == NULL)
@@ -86,10 +87,12 @@ kiwi_set_db(struct kiwi_ctx *kiwi, int db_type, char *db_name, int max_size)
 #endif
 #ifdef USE_KIWI_DB_MONGODB
 	case KIWI_DBTYPE_MONGODB:
-		errx(1, "db_type %d has not been implemented yet", db_type);
+		errx(1, "ERROR: %s: db_type %d has not been implemented yet",
+		    __FUNCTION__, db_type);
 #endif
 	default:
-		errx(1, "unsupported db_type %d", db_type);
+		errx(1, "ERROR: %s: unsupported db_type %d",
+		    __FUNCTION__, db_type);
 	}
 
 	return kiwi->db_ctx->db_open(kiwi);

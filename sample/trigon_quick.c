@@ -6,26 +6,17 @@
 #include <err.h>
 
 #include "kiwi.h"
+#include <math.h>
 
-struct kiwi_keymap map[] = {
-    { "http://fiap.tanu.org/test/sin0001",
-	"k4814162ce50b1a0bc25e7c6a5a5631ad40d65c8e" },
-    { "http://fiap.tanu.org/test/cos0001",
-	"k77838fb52e904cf55cea4e4e03678c681336a7b6" },
-    { "http://fiap.tanu.org/test/tan0001",
-	"k85ae23c4a7955ba1572f605fe971b706de4505b3" }
-};
+struct kiwi_ctx *kiwi;	/* XXX should it be local variable. */
 
-#ifdef USE_KIWI_SERVER
+/* for server */
 char *server_addr = NULL;
-char *server_port = "18880";
-#endif
+char *server_port = "18886";
 
-#ifdef USE_KIWI_CLIENT
-char *submit_point = "http://localhost:18880";
-#endif
-
-char *slite3_db_name = "wren.db";
+/* for client */
+char *server_url = "http://localhost:18880";
+char *config_file = "trigon_quick.ini";
 
 int f_debug = 0;
 
@@ -35,37 +26,50 @@ void
 usage()
 {
 	printf(
-"Usage: %s [-dh]\n"
-	, prog_name);
+"Usage: %s [-dh] [-c config] [-p port] [-s name]\n"
+"    -c: specify the config file. (default: %s)\n"
+"    -p: specify the port number to be listened. (default: %s)\n"
+"    -s: specify the server name for publish. (default: %s)\n"
+	, prog_name, config_file, server_port, server_url);
 
 	exit(0);
 }
 
 int
-trigon_output(struct kiwi_ctx *kiwi)
+trigon_output(void *cb_ctx)
 {
+	struct kiwi_ctx *kiwi = (struct kiwi_ctx *)cb_ctx;
 	static double theta = 0;
-	char d1[10], d2[10], d3[10];
+	char val[10];
 	char s_time[KIWI_TIME_MAXLEN];
 	struct kiwi_chunk_key *head = NULL;
 
-	kiwi_get_time(s_time, sizeof(s_time), 0);
-	kiwi_chunk_add(&head, s_key, asp->s_data, s_time);
+	kiwi_get_strtime(s_time, sizeof(s_time), 0);
 
-	snprintf(d1, sizeof(d1), "%8.6f", sin(theta/180*3.14));
-	snprintf(d2, sizeof(d2), "%8.6f", cos(theta/180*3.14));
-	snprintf(d3, sizeof(d3), "%8.6f", tan(theta/180*3.14));
-	kiwi_get_time(s_time, sizeof(s_time), 0);
-
+	snprintf(val, sizeof(val), "%8.6f", sin(theta/180*3.14));
+	kiwi_chunk_add(&head, kiwi->keymap[0]->key, val, s_time);
 	if (kiwi->debug)
-		printf("%8s %8s %8s\n", d1, d2, d3);
+		printf("%8s ", val);
 
-	kiwi_chunk_add(&head, map[0].key, d1, s_time);
-	kiwi_chunk_add(&head, map[1].key, d2, s_time);
-	kiwi_chunk_add(&head, map[2].key, d3, s_time);
+	snprintf(val, sizeof(val), "%8.6f", cos(theta/180*3.14));
+	kiwi_chunk_add(&head, kiwi->keymap[0]->key, val, s_time);
+	if (kiwi->debug)
+		printf("%8s ", val);
 
-	kiwi_submit(kiwi, head);
-	head = NULL;
+	snprintf(val, sizeof(val), "%8.6f", tan(theta/180*3.14));
+	kiwi_chunk_add(&head, kiwi->keymap[0]->key, val, s_time);
+	if (kiwi->debug)
+		printf("%8s\n", val);
+
+	theta += 15;
+
+#ifdef USE_KIWI_SERVER
+	kiwi_submit_ldb(kiwi, head);
+#endif
+#ifdef USE_KIWI_CLIENT
+	kiwi_submit_peer(kiwi, head);
+#endif
+	kiwi_chunk_free(head);
 
 	return 0;
 }
@@ -74,12 +78,17 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	struct kiwi_ctx *kiwi;
 
 	prog_name = 1 + rindex(argv[0], '/');
 
-	while ((ch = getopt(argc, argv, "dh")) != -1) {
+	while ((ch = getopt(argc, argv, "c:p:dh")) != -1) {
 		switch (ch) {
+		case 'c':
+			config_file = optarg;
+			break;
+		case 'p':
+			server_url = optarg;
+			break;
 		case 'd':
 			f_debug++;
 			break;
@@ -96,23 +105,27 @@ main(int argc, char *argv[])
 		usage();
 
 	kiwi = kiwi_init();
-	kiwi_set_debug(kiwi, debug);
 
-	kiwi_set_db(kiwi, KIWI_DBTYPE_RINGBUF, db_name, 60);
-	kiwi_set_keymap(kiwi, map, KIWI_KEYMAP_SIZE(map));
+	/* load and check config */
+	kiwi_config_load(kiwi, config_file);
+	if (!kiwi_config_check_section(kiwi, "keymap"))
+		errx(1, "keymap must be defined.");
+	kiwi_config_set_keymap(kiwi);
 
-	kiwi_set_codec(kiwi, KIWI_CODEC_IEEE1888);
+	kiwi_set_debug(kiwi, f_debug);
+	kiwi_set_db(kiwi, KIWI_DBTYPE_RINGBUF, NULL, 60);
+
+	kiwi_set_event_timer(kiwi, 60000, trigon_output);
+
 #ifdef USE_KIWI_CLIENT
-	kiwi_set_client_param(kiwi, KIWI_TRANSPORT_HTTP, peer_name);
+	kiwi_set_client(kiwi, KIWI_TRANSPORT_IEEE1888_SOAP, server_url, NULL);
 #endif
 
-	kiwi_set_io_event(kiwi, trigon_output);
-
 #ifdef USE_KIWI_SERVER
-	kiwi_set_server_param(kiwi, server_addr, server_port);
+	kiwi_set_server(kiwi, server_addr, server_port, 4096, NULL);
 	kiwi_server_loop(kiwi);
 #else	/* !USE_KIWI_SERVER */
-	kiwi_io_loop(kiwi);
+	kiwi_ev_loop(kiwi);
 #endif
 
 	return 0;

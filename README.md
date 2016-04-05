@@ -1,13 +1,3 @@
-chunk.c: In function 'kiwi_time_canon':
-chunk.c:75:2: warning: incompatible implicit declaration of built-in function
-'snprintf' [enabled by default]
-chunk.c: In function 'kiwi_chunk_add_value':
-chunk.c:179:20: warning: incompatible implicit declaration of built-in function
-'strdup' [enabled by default]
-chunk.c: In function 'kiwi_chunk_add_key':
-chunk.c:241:18: warning: incompatible implicit declaration of built-in function
-'strdup' [enabled by default]
-
 ##
 
 if you need sqlite as your storage,
@@ -18,7 +8,7 @@ if you need http as your transport,
     libcurl
     libcurl4-openssl-dev
 
-libmicrohttpd
+libmicrohttpd-0.9.38
 libjansson
 
 ## mac
@@ -52,15 +42,14 @@ default is a ring buffer.
 USE_KIWI_DB_SQLITE3
 USE_KIWI_DB_MONGODB
 
-### codec
-
-default is ieee1888.
-USE_KIWI_CODEC_JSON
-
 ### transport protocol
 
-USE_KIWI_TRANSPORT_XMPP
-USE_KIWI_TRANSPORT_MQTT
+default is IEEE1888+SOAP.
+
+USE_KIWI_TRANSPORT_IEEE1888_SOAP
+USE_KIWI_TRANSPORT_KII_HTTP
+USE_KIWI_TRANSPORT_XMPP_JSON (not yet)
+USE_KIWI_TRANSPORT_MQTT_JSON (not yet)
 
     ~~~~
     *Application*
@@ -103,35 +92,15 @@ USE_KIWI_TRANSPORT_MQTT
 
 ## configuration
 
-    mode :=
-        quick
-        batch
+    [keymap]
 
-    span :=
-        <number in seconds>
+    [section]
+    key = value
 
-    compress :=
-        true
-        false
-
-    storage :=
-        memory
-        file
-        sqlite
-
-    encoding :=
-        raw
-        xml (ieee1888)
-        json
-        bpack
-
-    transport :=
-        file
-        http (tcp)
-        coap (udp)
-
-    dest :=
-        <URL in string>
+    kiwi_config_load(kiwi, config_file);
+    kiwi_config_check_section(kiwi, section_name);
+    kiwi_config_get_v(kiwi, key);
+        
 
 ## configuration example
 

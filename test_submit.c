@@ -49,8 +49,8 @@ test_submit()
 	kiwi_chunk_add(&head, "key2", s_val[1], s_time);
 	kiwi_chunk_add(&head, "key3", s_val[2], s_time);
 
-	kiwi_submit(kiwi, head);
-	head = NULL;
+	kiwi_submit_ldb(kiwi, head);
+	kiwi_chunk_free(head);
 }
 
 int
