@@ -1,3 +1,10 @@
+kiwi
+====
+
+** DON'T TRUST THIS DOCUMENT. IT SHOULD BE RE-WRITTEN SOON **
+
+kiwi is a library to make a field/edge/fog gateway.
+
 ##
 
 if you need sqlite as your storage,
