@@ -16,6 +16,122 @@ if you need sqlite as your storage,
 
 libjansson
 
+## tips
+
+### compiling of libcurl 7.48.0
+
+options for the configure
+
+    ~~~~
+    ./configure \
+        --enable-debug \
+        --enable-ipv6 \
+        --disable-ftp \
+        --disable-file \
+        --disable-ldap  \
+        --disable-ldaps \
+        --disable-rtsp \
+        --disable-dict \
+        --disable-telnet \
+        --disable-tftp \
+        --disable-pop3 \
+        --disable-imap \
+        --disable-smb \
+        --disable-smtp \
+        --disable-gopher \
+        --disable-manual \
+        --disable-sspi \
+        --disable-ntlm-wb \
+        --disable-tls-srp \
+        --without-winssl \
+        --without-darwinssl \
+        --without-gnutls \
+        --without-polarssl \
+        --without-mbedtls \
+        --without-cyassl \
+        --without-nss \
+        --without-axtls \
+        --without-libpsl \
+        --without-libmetalink \
+        --without-libssh2 \
+        --without-librtmp \
+        --without-winidn \
+        --without-libidn \
+        --without-nghttp2 \
+        --without-zsh-functions-dir \
+        --prefix=${HOME}/apps/curl
+    ~~~~
+
+result of the configure.
+
+    ~~~~
+    configure: Configured to build curl/libcurl:
+    
+      curl version:     7.48.0
+      Host setup:       i686-pc-linux-gnu
+      Install prefix:   /home/sakane/apps/curl
+      Compiler:         gcc
+      SSL support:      enabled (OpenSSL)
+      SSH support:      no      (--with-libssh2)
+      zlib support:     enabled
+      GSS-API support:  no      (--with-gssapi)
+      TLS-SRP support:  no      (--enable-tls-srp)
+      resolver:         default (--enable-ares / --enable-threaded-resolver)
+      IPv6 support:     enabled
+      Unix sockets support: enabled
+      IDN support:      no      (--with-{libidn,winidn})
+      Build libcurl:    Shared=yes, Static=yes
+      Built-in manual:  no      (--enable-manual)
+      --libcurl option: enabled (--disable-libcurl-option)
+      Verbose errors:   enabled (--disable-verbose)
+      SSPI support:     no      (--enable-sspi)
+      ca cert bundle:   /etc/ssl/certs/ca-certificates.crt
+      ca cert path:     no
+      ca fallback:      no
+      LDAP support:     no      (--enable-ldap / --with-ldap-lib / --with-lber-lib)
+      LDAPS support:    no      (--enable-ldaps)
+      RTSP support:     no      (--enable-rtsp)
+      RTMP support:     no      (--with-librtmp)
+      metalink support: no      (--with-libmetalink)
+      PSL support:      no      (--with-libpsl)
+      HTTP2 support:    disabled (--with-nghttp2)
+      Protocols:        HTTP HTTPS
+    ~~~~
+
+### compiling of libmicrohttpd 0.9.48
+
+options for the configure
+
+    ~~~~
+    CFLAGS=-g ./configure \
+        --disable-curl \
+        --enable-https \
+        --prefix=$HOME/apps/mhd
+    ~~~~
+
+result of the configure.
+
+    ~~~~
+    configure: libmicrohttpd 0.9.48 Configuration Summary:
+      Cross-compiling:   no
+      Operating System:  linux-gnu
+      Threading lib:     posix
+      libcurl (testing): no, many unit tests will not run
+      Target directory:  /home/sakane/apps/mhd
+      Messages:          yes
+      Basic auth.:       yes
+      Digest auth.:      yes
+      Postproc:          yes
+      HTTPS support:     yes (using libgnutls and libgcrypt)
+      poll support:      yes
+      epoll support:     yes
+      build docs:        yes
+      build examples:    yes
+    
+    configure: HTTPS subsystem configuration:
+      License         :  LGPL only
+    ~~~~
+
 ## mac
 
 sqlite3
