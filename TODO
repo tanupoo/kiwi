@@ -2,7 +2,5 @@
 - keymap should be gone from the config file.
   as default, keymap should be set in the internal.
 - support option in if_mhd_select.c (libmicrohttpd)
-- send the http headers to solve the cors issue.
-- check to use strdup()
 - ERROR/WARNING tag
 - syslog
