@@ -113,8 +113,8 @@ kiwi_get_strunixtime(char *buf, int buflen)
 	if (gettimeofday(&tp, &tzp))
 		err(1, "ERROR: %s: ", __FUNCTION__);
 
-	tp.tv_sec += tzp.tz_minuteswest * 60;
-	msec = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+	msec = tp.tv_sec;
+	msec = (msec + tzp.tz_minuteswest * 60) * 1000 + tp.tv_usec / 1000;
 	res = snprintf(buf, buflen, "%llu", msec);
 	if (res == 0)
 		errx(1, "ERROR: %s: buf is too short.", __FUNCTION__);
