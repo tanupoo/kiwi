@@ -2,5 +2,5 @@
 - keymap should be gone from the config file.
   as default, keymap should be set in the internal.
 - support option in if_mhd_select.c (libmicrohttpd)
-- ERROR/WARNING tag
-- syslog
+- syslog with ERROR/WARNING tag
+- curl_easy_perform() failed: Problem with the SSL CA cert (path? access rights?)
